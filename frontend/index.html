@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบค้นหาข้อมูลผู้ป่วย</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #459b7e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result-card {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            text-align: left;
+            background-color: #fafafa;
+            display: none; /* ซ่อนไว้ก่อนจนกว่าจะค้นหาเจอ */
+        }
+        .error {
+            color: red;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🏥 ค้นหาผู้ป่วย</h2>
+        <input type="text" id="patientId" placeholder="ระบุ ID ผู้ป่วย เช่น 1">
+        <br>
+        <button onclick="searchPatient()">ค้นหาข้อมูล</button>
+
+        <div id="errorMsg" class="error"></div>
+        
+        <div id="result" class="result-card">
+            <p><strong>ID:</strong> <span id="res-id"></span></p>
+            <p><strong>ชื่อ-นามสกุล:</strong> <span id="res-name"></span></p>
+            <p><strong>อายุ:</strong> <span id="res-age"></span> ปี</p>
+            <p><strong>อาการ:</strong> <span id="res-condition"></span></p>
+        </div>
+    </div>
+
+    <script>
+        async function searchPatient() {
+            const id = document.getElementById("patientId").value;
+            const resultDiv = document.getElementById("result");
+            const errorMsg = document.getElementById("errorMsg");
+            
+            // รีเซ็ตการแสดงผล
+            resultDiv.style.display = "none";
+            errorMsg.innerHTML = "";
+
+            if (!id) {
+                errorMsg.innerHTML = "กรุณากรอก ID ผู้ป่วย";
+                return;
+            }
+
+            try {
+                // เรียก API ไปที่ Go Backend
+                const response = await fetch(`http://localhost:9999/patients/${id}`);
+                
+                if (!response.ok) {
+                    throw new Error("ไม่พบข้อมูลผู้ป่วย หรือระบบมีปัญหา");
+                }
+
+                const data = await response.json(); // แปลงผลลัพธ์เป็น JSON
+
+                // นำข้อมูลไปแสดงใน HTML
+                document.getElementById("res-id").innerText = data.ID || data.id;
+                document.getElementById("res-name").innerText = `${data.FirstName || data.first_name} ${data.LastName || data.last_name}`;
+                document.getElementById("res-age").innerText = data.Age || data.age;
+                document.getElementById("res-condition").innerText = data.Condition || data.condition;
+
+                resultDiv.style.display = "block"; // แสดงกล่องข้อมูล
+
+            } catch (error) {
+                errorMsg.innerHTML = error.message;
+            }
+        }
+    </script>
+
+</body>
+</html>
